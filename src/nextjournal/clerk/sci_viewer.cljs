@@ -8,6 +8,7 @@
             [goog.string :as gstring]
             [lambdaisland.uri.normalize :as uri.normalize]
             [nextjournal.clerk.viewer :as viewer :refer [code md plotly tex table vl row col with-viewer with-viewers]]
+            [nextjournal.clerk.parser :as clerk.parser]
             [nextjournal.markdown.transform :as md.transform]
             [nextjournal.ui.components.d3-require :as d3-require]
             [nextjournal.ui.components.icon :as icon]
@@ -683,6 +684,10 @@
    'doc-url doc-url
    'url-for url-for
    'read-string read-string
+
+   ;; parse (TODO: doesn't belong here)
+   'parse-clojure-string clerk.parser/parse-clojure-string
+   'parse-markdown-string clerk.parser/parse-markdown-string
 
    ;; clerk viewer API
    'code code

@@ -164,6 +164,8 @@
 
 ;; ## In-process Pagination
 
+;; FIXME: pagination works here, but makes page unresponsive
+#_
 (c/card
   (range))
 
@@ -172,3 +174,26 @@
 
 (c/card
   {:a (range 21)})
+
+;; ## Parser API
+(c/card
+  (v/html
+   [:div
+    (let [clj-code "(ns hello.foo)
+;; # This ns is _parsed_ from `cljs`
+(defn answer [] 42)
+;; ## End
+"]
+      [:div
+       [:div.viewer-code.mb-2 [v/inspect (v/code clj-code)]]
+       [v/inspect (v/parse-clojure-string {:doc? true} clj-code)]])
+    (let [md-code "# This is a _Markdown_ string
+with some **code** inside
+```clojure
+(defn answer [] 42)
+```
+;; ## End
+"]
+      [:div
+       [:div [:pre.text-white md-code]]
+       [v/inspect (v/parse-markdown-string {:doc? true} md-code)]])]))
