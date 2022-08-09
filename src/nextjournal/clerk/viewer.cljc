@@ -707,12 +707,15 @@
 #?(:clj
    (defn process-blocks [viewers {:as doc :keys [ns]}]
      (-> doc
-         (update :blocks (partial into [] (comp (mapcat (partial with-block-viewer doc))
-                                                (map (comp process-wrapped-value
-                                                           apply-viewers*
-                                                           (partial ensure-wrapped-with-viewers viewers))))))
+         (update :blocks (fn [blocks] (into [] (comp (mapcat #(with-block-viewer doc %))
+                                                    (map #(->> %
+                                                               process-wrapped-value
+                                                               apply-viewers*
+                                                               (ensure-wrapped-with-viewers viewers)))))
+                           blocks))
          (select-keys [:blocks :toc :title])
-         (cond-> ns (assoc :scope (datafy-scope ns))))))
+         (cond-> #_doc
+           ns (assoc :scope (datafy-scope ns))))))
 
 (def notebook-viewer
   {:name :clerk/notebook

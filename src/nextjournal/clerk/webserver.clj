@@ -49,7 +49,12 @@
           desc (v/present (v/ensure-wrapped-with-viewers
                            (v/get-viewers ns result)
                            (v/->value result)) ;; TODO understand why this unwrapping fixes lazy loaded table viewers
-                          fetch-opts)]
+                          {})
+          get-value-at-path (-> desc meta :path->get-value-fn (get (:path fetch-opts)))
+          _ (prn :fetch fetch-opts :get-value-at-path get-value-at-path)
+          _ (prn :v (:path (get-value-at-path)) :cp (:current-path (get-value-at-path)))
+          desc (#'v/present* (get-value-at-path))]
+      (prn :fetch-opts fetch-opts :desc desc)
       (if (contains? desc :nextjournal/content-type)
         {:body (v/->value desc)
          :content-type (:nextjournal/content-type desc)}
