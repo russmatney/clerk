@@ -348,19 +348,27 @@
      :fold? (= code :fold)
      :code? (not= :hide code)}))
 
-#?(:clj
-   (defn with-block-viewer [doc {:as cell :keys [type]}]
-     (case type
-       :markdown [(with-viewer :markdown (:doc cell))]
-       :code (let [{:as cell :keys [result]} (update cell :result apply-viewer-unwrapping-var-from-def)
-                   {:as display-opts :keys [code? result?]} (->display cell)]
-               (cond-> []
-                 code?
-                 (conj (with-viewer :clerk/code-block
-                         ;; TODO: display analysis could be merged into cell earlier
-                         (-> cell (merge display-opts) (dissoc :result))))
-                 result?
-                 (conj (->result doc result)))))))
+#_(->display {:result {:nextjournal.clerk/visibility {:code :show :result :show}}})
+#_(->display {:result {:nextjournal.clerk/visibility {:code :fold :result :show}}})
+#_(->display {:result {:nextjournal.clerk/visibility {:code :fold :result :hide}}})
+#_(->display {:ns? true :result {:nextjournal.clerk/visibility {:code :hide}}})
+#_(->display {:ns? true})
+
+(defn with-block-viewer [doc {:as cell :keys [type]}]
+  (case type
+    :markdown [(with-viewer :markdown (:doc cell))]
+    :code (let [cell (update cell :result apply-viewer-unwrapping-var-from-def)
+                {:as display-opts :keys [code? result?]} (->display cell)]
+            ;; TODO: use vars instead of names
+            (cond-> []
+              code?
+              (conj (with-viewer :clerk/code-block
+                      ;; TODO: display analysis could be merged into cell earlier
+                      (-> cell (merge display-opts) (dissoc :result))))
+              result?
+              (conj (with-viewer :clerk/result-block
+                      (merge (select-keys doc [:inline-results?])
+                             cell)))))))
 
 (defn update-viewers [viewers select-fn->update-fn]
   (reduce (fn [viewers [pred update-fn]]
@@ -716,27 +724,31 @@
       :opening-paren "[" :closing-paren "]"
       :fetch-opts {:n 20}}))
 
+(def result-block-viewer
+  {:name :clerk/result-block
+   :transform-fn (comp mark-presented
+                       #?(:clj (update-val (fn [{:as cell :keys [result]}]
+                                             (->result cell result)))))})
+
 (def result-viewer
   {:name :clerk/result :render-fn (quote v/result-viewer) :transform-fn mark-presented})
 
-#?(:clj
-   (defn process-blocks [viewers {:as doc :keys [ns]}]
-     (-> doc
-         (update :blocks (partial into [] (comp (mapcat (partial with-block-viewer doc))
-                                                (map (comp process-wrapped-value
-                                                           apply-viewers*
-                                                           (partial ensure-wrapped-with-viewers viewers))))))
-         (select-keys [:blocks :toc :toc-visibility :title])
-         (cond-> ns (assoc :scope (datafy-scope ns))))))
+(defn process-blocks [viewers {:as doc :keys [ns]}]
+  (-> doc
+      (update :blocks (partial into [] (comp (mapcat (partial with-block-viewer doc))
+                                             (map (comp process-wrapped-value
+                                                        apply-viewers*
+                                                        (partial ensure-wrapped-with-viewers viewers))))))
+      (select-keys [:blocks :toc :toc-visibility :title])
+      #?(:clj (cond-> ns (assoc :scope (datafy-scope ns))))))
 
 (def notebook-viewer
   {:name :clerk/notebook
    :render-fn (quote v/notebook-viewer)
-   :transform-fn #?(:cljs mark-presented
-                    :clj  (fn [{:as wrapped-value :nextjournal/keys [viewers]}]
-                            (-> wrapped-value
-                                (update :nextjournal/value (partial process-blocks viewers))
-                                mark-presented)))})
+   :transform-fn (fn [{:as wrapped-value :nextjournal/keys [viewers]}]
+                   (-> wrapped-value
+                       (update :nextjournal/value (partial process-blocks viewers))
+                       mark-presented))})
 
 (def default-viewers
   ;; maybe make this a sorted-map
@@ -778,6 +790,7 @@
    table-viewer
    table-error-viewer
    code-block-viewer
+   result-block-viewer
    tagged-value-viewer
    result-viewer
    notebook-viewer
