@@ -8,7 +8,10 @@
                     :modules {:viewer {:entries [nextjournal.clerk.sci-viewer
                                                  nextjournal.clerk.static-app
                                                  nextjournal.devcards.main
-                                                 nextjournal.viewer.notebook]}}
+                                                 nextjournal.viewer.notebook
+
+                                                 ;; just a temporary placement / move to a demo repo
+                                                 nextjournal.clerk.app]}}
 
                     :dev {:modules {:viewer {:entries [devtools]}}}
                     :release {:output-dir "build/"}
