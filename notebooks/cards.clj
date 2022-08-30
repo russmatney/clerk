@@ -132,7 +132,8 @@
 
 ;; ## Notebook Viewer
 (c/card
-  (v/with-viewer :clerk/notebook
+  (v/with-viewer {:render-fn v/notebook-viewer
+                  :transform-fn v/mark-presented}
                  {:blocks (map v/present
                                [(v/with-viewer :markdown "# Hello Markdown\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum velit nulla, sodales eu lorem ut, tincidunt consectetur diam. Donec in scelerisque risus. Suspendisse potenti. Nunc non hendrerit odio, at malesuada erat. Aenean rutrum quam sed velit mollis imperdiet. Sed lacinia quam eget tempor tempus. Mauris et leo ac odio condimentum facilisis eu sed nibh. Morbi sed est sit amet risus blandit ullam corper. Pellentesque nisi metus, feugiat sed velit ut, dignissim finibus urna.")
                                 (v/code "(shuffle (range 10))")

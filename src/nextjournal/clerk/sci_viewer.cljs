@@ -700,6 +700,7 @@
    'tex tex
    'vl vl
    'present viewer/present
+   'mark-presented viewer/mark-presented
    'with-viewer with-viewer
    'with-viewers with-viewers})
 
