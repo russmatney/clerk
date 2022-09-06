@@ -1062,31 +1062,32 @@
     #_(prn :xs xs :type (type xs) :path path :current-path current-path :descend? descend?)
     (when (and !budget (not descend?) (not presented?))
       (swap! !budget #(max (dec %) 0)))
-    (-> (merge (->opts wrapped-value)
-               (with-viewer (->viewer wrapped-value)
-                 (cond presented?
-                       wrapped-value
+    (when (or (not !budget) (pos? @!budget))
+      (-> (merge (->opts wrapped-value)
+                 (with-viewer (->viewer wrapped-value)
+                   (cond presented?
+                         wrapped-value
 
-                       descend? ;; TODO: can this be unified, simplified, or even dropped in favor of continuation?
-                       (let [idx (first (drop (count current-path) path))]
-                         (present* (-> (ensure-wrapped-with-viewers
-                                        viewers
-                                        (cond (and (map? xs) (keyword? idx)) (get xs idx)
-                                              (or (map? xs) (set? xs)) (nth (seq (ensure-sorted xs)) idx)
-                                              (associative? xs) (get xs idx)
-                                              (sequential? xs) (nth xs idx)))
-                                       (merge (->opts wrapped-value))
-                                       (update :current-path (fnil conj []) idx))))
+                         descend? ;; TODO: can this be unified, simplified, or even dropped in favor of continuation?
+                         (let [idx (first (drop (count current-path) path))]
+                           (present* (-> (ensure-wrapped-with-viewers
+                                          viewers
+                                          (cond (and (map? xs) (keyword? idx)) (get xs idx)
+                                                (or (map? xs) (set? xs)) (nth (seq (ensure-sorted xs)) idx)
+                                                (associative? xs) (get xs idx)
+                                                (sequential? xs) (nth xs idx)))
+                                         (merge (->opts wrapped-value))
+                                         (update :current-path (fnil conj []) idx))))
 
-                       (string? xs)
-                       (present+paginate-string wrapped-value)
+                         (string? xs)
+                         (present+paginate-string wrapped-value)
 
-                       (and xs (seqable? xs))
-                       (present+paginate-children wrapped-value)
+                         (and xs (seqable? xs))
+                         (present+paginate-children wrapped-value)
 
-                       :else ;; leaf value
-                       xs)))
-        process-wrapped-value)))
+                         :else ;; leaf value
+                         xs)))
+          process-wrapped-value))))
 
 (defn assign-content-lengths [wrapped-value]
   (w/postwalk
